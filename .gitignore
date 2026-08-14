@@ -1,0 +1,19 @@
+# Django
+Django/venv/
+Django/__pycache__/
+Django/**/*.pyc
+Django/*.sqlite3
+Django/.env
+
+# React
+university-web/node_modules/
+university-web/build/
+university-web/dist/
+university-web/.env
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
