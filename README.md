@@ -1,0 +1,375 @@
+# University Hub — Full Stack Project
+
+A learning project that pairs a **Django + Django REST Framework** backend with a **React** frontend. It manages university departments, courses, and students, and demonstrates core full-stack concepts: models, migrations, authentication, REST APIs, and React routing/state.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [1. Backend (Django)](#1-backend-django)
+  - [2. Frontend (React)](#2-frontend-react)
+- [Running the Project](#running-the-project)
+- [API Reference](#api-reference)
+- [Authentication](#authentication)
+- [Django Admin](#django-admin)
+- [Available Scripts](#available-scripts)
+- [Troubleshooting](#troubleshooting)
+- [Known Limitations](#known-limitations)
+
+---
+
+## Overview
+
+The repository contains two independent applications:
+
+| Folder | Description | Runs on |
+| --- | --- | --- |
+| `Django/UniversityHub` | REST API + server-rendered pages for departments, courses, and students | `http://127.0.0.1:8000` |
+| `university-web` | React single-page app that consumes the API | `http://localhost:3000` |
+
+The React app talks to the Django API over CORS (already configured for `http://localhost:3000`).
+
+---
+
+## Tech Stack
+
+**Backend**
+- Python 3.10+
+- Django 6.x
+- Django REST Framework
+- Django CORS Headers
+- Pillow (image uploads)
+- SQLite (default database)
+
+**Frontend**
+- React 19 (Create React App / `react-scripts`)
+- React Router 7
+- Axios
+- Tailwind CSS 3
+
+---
+
+## Project Structure
+
+```
+MyFullStackProject/
+├── .gitignore
+├── Django/
+│   ├── runserver.bat                 # Windows helper: install deps + run server
+│   ├── venv/                         # local virtual environment (not committed)
+│   └── UniversityHub/
+│       ├── manage.py
+│       ├── requirements.txt
+│       ├── db.sqlite3                # local database (not committed)
+│       ├── UniversityHub/            # project settings
+│       │   ├── settings.py
+│       │   ├── urls.py
+│       │   ├── asgi.py
+│       │   └── wsgi.py
+│       ├── academic/                 # main application
+│       │   ├── models.py             # department, course, Student
+│       │   ├── views.py              # HTML views + REST ViewSets
+│       │   ├── serializers.py
+│       │   ├── forms.py
+│       │   ├── urls.py
+│       │   ├── admin.py
+│       │   ├── migrations/
+│       │   ├── static/academic/
+│       │   └── templates/academic/
+│       └── templates/                # base + registration templates
+└── university-web/
+    ├── package.json
+    ├── tailwind.config.js
+    ├── public/
+    └── src/
+        ├── index.js                  # entry point (Router + AuthProvider)
+        ├── App.js                    # routes
+        ├── context/AuthContext.jsx   # auth state + token handling
+        └── components/               # pages and UI pieces
+```
+
+---
+
+## Features
+
+- Department, course, and student data models with relationships (FK and M2M)
+- Course syllabus file uploads and student profile pictures (Pillow)
+- Token authentication (`/api-token-auth/`) for API access
+- Session-based login for the server-rendered pages
+- Role check: only staff users can delete students
+- Student profile page restricted to its owner
+- React SPA with routing for Home, Students, Courses, Course Details, About, Contact, and Login
+- Login state persisted in `localStorage` and re-applied to Axios on reload
+- Tailwind CSS styling
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10 or newer
+- Node.js 18 or newer (npm included)
+- Git
+
+Check your versions:
+
+```bash
+python --version
+node --version
+npm --version
+```
+
+### 1. Backend (Django)
+
+From the repository root:
+
+```bash
+cd Django/UniversityHub
+```
+
+Create and activate a virtual environment. On Windows:
+
+```powershell
+python -m venv ../venv
+../venv/Scripts/activate
+```
+
+On macOS/Linux:
+
+```bash
+python3 -m venv ../venv
+source ../venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create the database and apply migrations:
+
+```bash
+python manage.py migrate
+```
+
+Optional — create an admin account for the Django admin site:
+
+```bash
+python manage.py createsuperuser
+```
+
+Start the server:
+
+```bash
+python manage.py runserver
+```
+
+The API is now available at `http://127.0.0.1:8000/`.
+
+> **Note:** `db.sqlite3` is not committed to Git. Running `migrate` creates a fresh, empty database. Any previously committed database file was corrupted, so the fresh one is the reliable option.
+
+### 2. Frontend (React)
+
+Open a **second terminal**:
+
+```bash
+cd university-web
+npm install
+npm start
+```
+
+The app opens at `http://localhost:3000/`.
+
+---
+
+## Running the Project
+
+Start both servers (in separate terminals):
+
+```bash
+# Terminal 1 — backend
+cd Django/UniversityHub
+../venv/Scripts/python manage.py runserver
+
+# Terminal 2 — frontend
+cd university-web
+npm start
+```
+
+Then open `http://localhost:3000/`.
+
+On Windows you can also use the helper script, which installs dependencies and starts Django:
+
+```powershell
+Django\runserver.bat
+```
+
+---
+
+## API Reference
+
+Base URL: `http://127.0.0.1:8000`
+
+### Server-rendered pages
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/academic/hello/` | Health-check style welcome message |
+| GET | `/academic/courses/` | Course list page (login required) |
+| GET | `/academic/courses/add/` | Add course form (login required) |
+| GET | `/academic/courses/edit/<id>/` | Edit course form (login required) |
+| GET | `/academic/department/<id>/` | Department details |
+| GET | `/academic/register-student/` | Student registration form |
+| GET | `/academic/register/` | Alias for student registration |
+| GET | `/academic/delete-student/<id>/` | Delete a student (staff only) |
+| GET | `/academic/profile/<id>/` | Student profile (owner only) |
+| GET | `/login/`, `/logout/` | Session login/logout |
+
+### REST API
+
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| GET | `/academic/api/courses/` | Public | List courses |
+| GET | `/academic/api/courses/<id>/` | Public | Retrieve a course |
+| POST | `/academic/api/courses/` | Token | Create a course |
+| PUT/PATCH | `/academic/api/courses/<id>/` | Token | Update a course |
+| DELETE | `/academic/api/courses/<id>/` | Token | Delete a course |
+| GET | `/academic/api/courses/semester/<n>/` | Public | Courses in a semester |
+| GET | `/academic/api/courses/syllabus/` | Public | Courses that have a syllabus |
+| GET | `/academic/api/courses/<id>/syllabus/` | Public | A single course with syllabus |
+| GET | `/academic/api/students/` | Token | List students |
+| POST | `/academic/api/students/` | Public | Register a student |
+| PUT/PATCH/DELETE | `/academic/api/students/<id>/` | Token | Update/delete a student |
+| POST | `/api-token-auth/` | — | Obtain an auth token |
+
+### Example requests
+
+Get a token:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api-token-auth/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "youruser", "password": "yourpass"}'
+```
+
+Response:
+
+```json
+{ "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b" }
+```
+
+List students with the token:
+
+```bash
+curl http://127.0.0.1:8000/academic/api/students/ \
+  -H "Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b"
+```
+
+Register a student (public endpoint):
+
+```bash
+curl -X POST http://127.0.0.1:8000/academic/api/students/ \
+  -F "first_name=Asha" \
+  -F "last_name=Menon" \
+  -F "email=asha@university.edu.com"
+```
+
+---
+
+## Authentication
+
+Two mechanisms are enabled:
+
+1. **Session authentication** — used by the Django HTML pages (`/login/`).
+2. **Token authentication** — used by the React app.
+
+In the React app:
+
+- Logging in stores the token under `userToken` in `localStorage`.
+- The token is attached to every Axios request as `Authorization: Token <token>`.
+- On page reload, `AuthContext` restores the token synchronously so requests made during the first render are authenticated.
+- Logging out clears the token and the Axios header.
+
+---
+
+## Django Admin
+
+1. Create a superuser (once): `python manage.py createsuperuser`
+2. Open `http://127.0.0.1:8000/admin/`
+3. Log in with the superuser credentials
+
+From the admin you can manage departments, courses, students, and users.
+
+---
+
+## Available Scripts
+
+### Backend
+
+| Command | Description |
+| --- | --- |
+| `python manage.py runserver` | Start the development server |
+| `python manage.py migrate` | Apply database migrations |
+| `python manage.py makemigrations` | Create new migrations after model changes |
+| `python manage.py createsuperuser` | Create an admin user |
+| `python manage.py check` | Validate the project configuration |
+| `python manage.py test` | Run tests |
+
+### Frontend
+
+| Command | Description |
+| --- | --- |
+| `npm start` | Run the app in development mode |
+| `npm run build` | Create an optimized production build in `build/` |
+| `npm test` | Run the test runner |
+| `npm run eject` | Eject from Create React App (irreversible) |
+
+---
+
+## Troubleshooting
+
+**`ModuleNotFoundError: No module named 'corsheaders'`**
+Install dependencies again with `pip install -r requirements.txt`. `django-cors-headers` is required by `settings.py`.
+
+**`django.db.utils.DatabaseError: file is not a database`**
+The SQLite file is corrupt. Delete `Django/UniversityHub/db.sqlite3` and run `python manage.py migrate` to recreate it.
+
+**CORS error in the browser**
+Make sure the backend is running on `127.0.0.1:8000` and the frontend on `localhost:3000`. Only that origin is allow-listed in `CORS_ALLOWED_ORIGINS`.
+
+**Students page stuck on "Loading students..." or shows "Please log in"**
+The student list endpoint requires authentication. Log in first at `/login`, then revisit the page.
+
+**`npm start` fails with "running scripts is disabled on this system" (Windows)**
+Use `npm.cmd` instead of `npm`, or run:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+**Port already in use**
+Run Django on another port: `python manage.py runserver 8001` and update the URLs in the React components accordingly.
+
+---
+
+## Known Limitations
+
+- The API endpoints are hard-coded to `http://127.0.0.1:8000` in the React components; there is no environment-variable configuration yet.
+- `DEBUG = True` and a development `SECRET_KEY` are committed in `settings.py`; these must be replaced before any deployment.
+- `ALLOWED_HOSTS` is empty, which is fine for local development only.
+- The registration form in the React app collects a `role` field that the backend does not currently store.
+- Course cards on the Courses page are partly static demo data; only the "All Courses" list and the student list come from the API.
+- No automated tests cover the API or the UI beyond the default Create React App test.
+
+---
+
+## License
+
+This project is intended for educational use.
