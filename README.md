@@ -392,9 +392,8 @@ Both hosts deploy automatically from this GitHub repository.
    | --- | --- |
    | `DATABASE_URL` | The Neon connection string from Step 1 |
    | `CORS_ALLOWED_ORIGINS` | Your Vercel URL (add after Step 3, e.g. `https://university-web.vercel.app`) |
-   | `CSRF_TRUSTED_ORIGINS` | `https://<your-service>.onrender.com` |
 
-   `SECRET_KEY` is generated automatically. `DEBUG` is set to `False`.
+   `SECRET_KEY` is generated automatically. `DEBUG` is set to `False`. `CSRF_TRUSTED_ORIGINS` does not need to be set — the backend's own `onrender.com` hostname is added automatically.
 4. Click **Apply**. The first deploy runs `build.sh`, which installs dependencies, collects static files, and applies migrations.
 5. Wait for the build to finish, then open:
    ```
