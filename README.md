@@ -386,7 +386,7 @@ This project is deployed with the following (free) setup:
 | Database | [Neon](https://neon.tech) | Free managed Postgres (Render's free disk is ephemeral) |
 | React app | [Vercel](https://vercel.com) | Built for static/CRA frontends, free |
 
-Both hosts build from this GitHub repository. Vercel redeploys automatically on every push; Render deploys are triggered manually unless the Render GitHub app is connected.
+Both hosts build from this GitHub repository. Vercel redeploys automatically on every push, and a GitHub Actions workflow triggers a Render deploy through a deploy hook whenever backend files change.
 
 ### Current deployment
 
@@ -399,7 +399,7 @@ Both hosts build from this GitHub repository. Vercel redeploys automatically on 
 ### Redeploying
 
 - **Push to `main`** — Vercel rebuilds the frontend automatically (its Git integration is connected).
-- **Backend** — Render does not currently receive GitHub push events for this service, so deploy from the dashboard (**Manual Deploy → Deploy latest commit**) or connect the GitHub app under Render **Account Settings → GitHub** to enable automatic deploys.
+- **Backend** — pushes to `main` that change `Django/`, `render.yaml`, or the workflow file run **Deploy backend to Render**, which calls the Render deploy hook stored in the `RENDER_DEPLOY_HOOK_URL` repository secret. Run that workflow manually from the Actions tab, or use the Render dashboard (**Manual Deploy → Deploy latest commit**), for anything else.
 - **Manual frontend deploy** — `cd university-web && vercel deploy --prod`.
 - **Database changes** — run migrations from the Render build (`build.sh` already does this) or locally with `DATABASE_URL` set to the Neon connection string.
 
@@ -496,6 +496,7 @@ If the Students page shows a network/CORS error, confirm `CORS_ALLOWED_ORIGINS` 
 | File | Purpose |
 | --- | --- |
 | `render.yaml` | Render Blueprint: service, build/start commands, env vars |
+| `.github/workflows/render-deploy.yml` | Calls the Render deploy hook on backend changes to `main` |
 | `Django/UniversityHub/build.sh` | Install deps, collect static, migrate, optional superuser |
 | `Django/UniversityHub/requirements.txt` | Adds `gunicorn`, `psycopg`, `whitenoise`, `dj-database-url` |
 | `university-web/vercel.json` | CRA framework preset + SPA rewrite for client-side routing |
