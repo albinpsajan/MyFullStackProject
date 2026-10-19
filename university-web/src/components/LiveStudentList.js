@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { apiUrl } from '../config';
 
 function LiveStudentList() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     // 1. Define the async function
     const fetchData = async () => {
       try {
         // 2. Make the request
-        const res = await axios.get(
-          'http://127.0.0.1:8000/academic/api/students/'
-        );
+        const res = await axios.get(apiUrl('/academic/api/students/'));
 
         // 3. Update State (Axios puts data inside .data)
-        console.log('===== DJANGO API DEBUG =====');
-        console.log('Full Response:', res);
-        console.log('Students Data:', res.data);
-        console.log('Total Students:', res.data.length);
-        console.log('===============================');
-
         setStudents(res.data);
+      } catch (err) {
+        console.error("Error connecting to Django:", err);
+
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setError("Please log in to view the student list.");
+        } else {
+          setError("Could not load students. Is the Django server running?");
+        }
+      } finally {
+        // Stop the loading spinner even when the request fails
         setLoading(false);
-      } catch (error) {
-        console.error("Error connecting to Django:", error);
       }
     };
     // 4. Call it
@@ -39,6 +42,8 @@ function LiveStudentList() {
 
       {loading ? (
         <p className="text-center text-gray-500">Loading students...</p>
+      ) : error ? (
+        <p className="text-center text-red-600">{error}</p>
       ) : students.length === 0 ? (
         <p className="text-center text-gray-500">No students found</p>
       ) : (

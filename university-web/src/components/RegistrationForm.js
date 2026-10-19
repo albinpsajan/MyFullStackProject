@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from "axios";
+import { apiUrl } from "../config";
 function RegistrationForm() {
 
   // 1. State is an object, not just a string
@@ -7,7 +8,7 @@ function RegistrationForm() {
     first_name: "",
     last_name: "",
     email: "",
-    profile_pic: null,
+    profile_picture: null,
     role: "student"
   });
   const [message, setMessage] = useState("");
@@ -27,7 +28,7 @@ function RegistrationForm() {
   const handleFileChange = (e) => {
     setFormData(prevState => ({
       ...prevState,
-      profile_pic: e.target.files[0]
+      profile_picture: e.target.files[0]
     }));
   };
 
@@ -40,13 +41,13 @@ function RegistrationForm() {
     data.append("last_name", formData.last_name);
     data.append("email", formData.email);
 
-    if (formData.profile_pic) {
-      data.append("profile_pic", formData.profile_pic);
+    if (formData.profile_picture) {
+      data.append("profile_picture", formData.profile_picture);
     }
     // console.log(formData);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/academic/api/students/",
+        apiUrl("/academic/api/students/"),
         data,
         {
           headers: {
@@ -61,11 +62,16 @@ function RegistrationForm() {
         first_name: "",
         last_name: "",
         email: "",
-        profile_pic: null
+        profile_picture: null
       });
     } catch (error) {
       console.log("ERROR:", error.response?.data);
-      setMessage("Failed to save data.");
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setMessage("Please log in before registering a student.");
+      } else {
+        setMessage("Failed to save data.");
+      }
     }
   };
 
@@ -97,7 +103,7 @@ function RegistrationForm() {
           {/* File Upload */}
           <input
             type="file"
-            name="profile_pic"
+            name="profile_picture"
             onChange={handleFileChange}
           />
 

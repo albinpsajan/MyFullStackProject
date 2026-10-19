@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { apiUrl } from "../config";
 
 function Login() {
   const { login } = useContext(AuthContext); // context
@@ -20,10 +21,7 @@ function Login() {
   // LOGIN FUNCTION
   const handleLogin = async () => {
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api-token-auth/",
-        creds
-      );
+      const res = await axios.post(apiUrl("/api-token-auth/"), creds);
 
       const token = res.data.token;
 

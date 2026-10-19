@@ -1,0 +1,6 @@
+# Shell scripts must keep LF endings or they fail on Linux hosts like Render.
+*.sh text eol=lf
+build.sh text eol=lf
+
+# Windows helpers
+*.bat text eol=crlf

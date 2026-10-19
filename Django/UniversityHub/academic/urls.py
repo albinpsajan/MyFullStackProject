@@ -20,8 +20,10 @@ urlpatterns = [
     path('register/', views.register_user, name='register'),
     path('delete-student/<int:id>/', views.delete_student),
     path('profile/<int:id>/', views.student_profile),
-    path('api/', include(router.urls)),
+    # Specific API routes must come before the router, otherwise
+    # "courses/syllabus/" is treated as a course detail lookup (pk="syllabus").
     path('api/courses/semester/<int:semester>/', views.api_course_list_by_semester, name='api_course_list_by_semester'),
     path('api/courses/syllabus/', views.api_course_syllabus_list, name='api_course_syllabus_list'),
     path('api/courses/<int:id>/syllabus/', views.api_course_syllabus_detail, name='api_course_syllabus_detail'),
+    path('api/', include(router.urls)),
 ]

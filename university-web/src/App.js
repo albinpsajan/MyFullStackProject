@@ -4,7 +4,7 @@ import Contact from './components/Contact';
 import StudentPage from './components/StudentPage';
 import CoursePage from './components/CoursePage';
 import CourseDetails from './components/CourseDetails';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 
@@ -24,7 +24,7 @@ function App() {
       <Routes>
 
         {/* Home Page */}
-        <Route path="/login" element={<Login />} / >
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
 

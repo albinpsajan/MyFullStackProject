@@ -182,18 +182,39 @@ def api_course_syllabus_detail(request, id):
     return JsonResponse(serializer.data, safe=False)
 
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from .models import Course, Student
 from .serializers import CourseSerializer, StudentSerializer
+
+
+class IsAuthenticatedOrCreateOnly(BasePermission):
+    """Anyone may register (POST); reading/updating requires a login."""
+
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return True
+        return bool(request.user and request.user.is_authenticated)
+
+
+class ReadOnlyOrAuthenticated(BasePermission):
+    """Anyone may read; creating/updating/deleting requires a login."""
+
+    def has_permission(self, request, view):
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return True
+        return bool(request.user and request.user.is_authenticated)
+
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    # Reads are public; creating/updating/deleting courses requires a login.
+    permission_classes = [ReadOnlyOrAuthenticated]
     # Handles GET (list/detail), POST, PUT, DELETE
 
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrCreateOnly]
     # Handles GET (list/detail), POST, PUT, DELETE

@@ -20,6 +20,7 @@ A learning project that pairs a **Django + Django REST Framework** backend with 
 - [Django Admin](#django-admin)
 - [Available Scripts](#available-scripts)
 - [Troubleshooting](#troubleshooting)
+- [Deployment](#deployment)
 - [Known Limitations](#known-limitations)
 
 ---
@@ -355,17 +356,132 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
 **Port already in use**
-Run Django on another port: `python manage.py runserver 8001` and update the URLs in the React components accordingly.
+Run Django on another port: `python manage.py runserver 8001` and update `REACT_APP_API_URL` in `university-web/.env.local` accordingly.
+
+---
+
+## Deployment
+
+The recommended (free) setup splits the two apps:
+
+| Part | Host | Why |
+| --- | --- | --- |
+| Django API | [Render](https://render.com) | Runs Python, free web service |
+| Database | [Neon](https://neon.tech) | Free managed Postgres (Render's free disk is ephemeral) |
+| React app | [Vercel](https://vercel.com) | Built for static/CRA frontends, free |
+
+Both hosts deploy automatically from this GitHub repository.
+
+### Step 1 — Create the Neon database
+
+1. Sign up at [neon.tech](https://neon.tech) and create a project.
+2. Copy the **connection string** from the dashboard. It looks like:
+   ```
+   postgresql://user:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+   ```
+3. Keep it handy for the next step.
+
+### Step 2 — Deploy the backend on Render
+
+1. Sign up at [render.com](https://render.com) and connect your GitHub account.
+2. Click **New → Blueprint**, select the `MyFullStackProject` repo.
+   Render reads `render.yaml` from the repository root and configures the service automatically.
+3. When prompted, fill in the environment variables:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | The Neon connection string from Step 1 |
+   | `CORS_ALLOWED_ORIGINS` | Your Vercel URL (add after Step 3, e.g. `https://university-web.vercel.app`) |
+   | `CSRF_TRUSTED_ORIGINS` | `https://<your-service>.onrender.com` |
+
+   `SECRET_KEY` is generated automatically. `DEBUG` is set to `False`.
+4. Click **Apply**. The first deploy runs `build.sh`, which installs dependencies, collects static files, and applies migrations.
+5. Wait for the build to finish, then open:
+   ```
+   https://<your-service>.onrender.com/academic/hello/
+   ```
+   You should see `Welcome to University Hub!`.
+
+> **Free tier note:** Render's free services sleep after ~15 minutes of inactivity. The first request afterwards takes ~30–60 seconds to wake up.
+
+**Create an admin user.** Render's free plan has no shell access, so use the optional build-time superuser. In the Render dashboard add:
+
+| Variable | Value |
+| --- | --- |
+| `DJANGO_SUPERUSER_USERNAME` | `admin` |
+| `DJANGO_SUPERUSER_EMAIL` | your email |
+| `DJANGO_SUPERUSER_PASSWORD` | a strong password |
+
+Then trigger **Manual Deploy → Clear build cache & deploy**. `build.sh` creates the user if it doesn't exist yet.
+
+### Step 3 — Deploy the frontend on Vercel
+
+1. Sign up at [vercel.com](https://vercel.com) and import the same GitHub repository.
+2. Set **Root Directory** to `university-web`.
+3. Vercel detects Create React App automatically (`vercel.json` is already included).
+4. Add an environment variable:
+
+   | Name | Value |
+   | --- | --- |
+   | `REACT_APP_API_URL` | `https://<your-service>.onrender.com` |
+
+5. Click **Deploy**.
+6. Copy the resulting URL (e.g. `https://university-web.vercel.app`).
+
+### Step 4 — Connect the two
+
+1. Go back to Render → your service → **Environment**.
+2. Set `CORS_ALLOWED_ORIGINS` to your Vercel URL:
+   ```
+   https://university-web.vercel.app
+   ```
+   To also allow Vercel preview deployments, set `CORS_ALLOWED_ORIGIN_REGEXES` to:
+   ```
+   ^https://university-web-.*\.vercel\.app$
+   ```
+3. Save — Render redeploys automatically.
+
+### Step 5 — Verify
+
+Open your Vercel URL and check:
+
+- The site loads and navigation works.
+- **Login** with a user that exists in the production database.
+- The **Students** page lists data from the Render API.
+- Registering a student succeeds.
+
+If the Students page shows a network/CORS error, confirm `CORS_ALLOWED_ORIGINS` exactly matches the browser URL (including `https://`, no trailing slash).
+
+### How configuration is wired
+
+- **Backend:** all settings read from environment variables with local-friendly defaults. With no variables set, the project runs on SQLite with `DEBUG=True` exactly as before.
+- **Database:** `dj-database-url` uses `DATABASE_URL` when present, otherwise `Django/UniversityHub/db.sqlite3`.
+- **Static files:** WhiteNoise serves Django admin/static assets in production; `collectstatic` runs during the build.
+- **Frontend:** `src/config.js` centralizes the API base URL. It uses `REACT_APP_API_URL`, falling back to `http://127.0.0.1:8000`.
+
+### Deployment files reference
+
+| File | Purpose |
+| --- | --- |
+| `render.yaml` | Render Blueprint: service, build/start commands, env vars |
+| `Django/UniversityHub/build.sh` | Install deps, collect static, migrate, optional superuser |
+| `Django/UniversityHub/requirements.txt` | Adds `gunicorn`, `psycopg`, `whitenoise`, `dj-database-url` |
+| `university-web/vercel.json` | CRA framework preset + SPA rewrite for client-side routing |
+| `Django/UniversityHub/.env.example` | Backend variables reference |
+| `university-web/.env.example` | Frontend variables reference |
+
+### Deploying elsewhere
+
+- **Railway / Fly.io / Heroku:** use the same `build.sh` as the release command and `gunicorn UniversityHub.wsgi:application` as the start command, with `DATABASE_URL` pointing at any Postgres instance.
+- **PythonAnywhere:** set the WSGI file to `UniversityHub.wsgi.application` and run `migrate`/`collectstatic` in a console. SQLite works there because the disk is persistent.
+- **Any static host for the frontend:** run `npm run build` with `REACT_APP_API_URL` set and upload the `build/` folder.
 
 ---
 
 ## Known Limitations
 
-- The API endpoints are hard-coded to `http://127.0.0.1:8000` in the React components; there is no environment-variable configuration yet.
-- `DEBUG = True` and a development `SECRET_KEY` are committed in `settings.py`; these must be replaced before any deployment.
-- `ALLOWED_HOSTS` is empty, which is fine for local development only.
-- The registration form in the React app collects a `role` field that the backend does not currently store.
-- Course cards on the Courses page are partly static demo data; only the "All Courses" list and the student list come from the API.
+- The API base URL is configurable via `REACT_APP_API_URL`; without it the app defaults to `http://127.0.0.1:8000`.
+- Media uploads (profile pictures, syllabus files) are stored on local disk, which is **ephemeral** on Render's free tier. Use S3/Cloudinary for durable uploads in production.
 - No automated tests cover the API or the UI beyond the default Create React App test.
 
 ---

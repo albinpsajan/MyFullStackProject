@@ -2,14 +2,22 @@
 Django/venv/
 Django/__pycache__/
 Django/**/*.pyc
-Django/*.sqlite3
+Django/**/*.sqlite3
 Django/.env
+Django/**/.env
+Django/UniversityHub/staticfiles/
+Django/UniversityHub/media/
 
 # React
 university-web/node_modules/
 university-web/build/
 university-web/dist/
 university-web/.env
+university-web/.env.local
+university-web/.env.production
+
+# Vercel
+.vercel
 
 # VS Code
 .vscode/
