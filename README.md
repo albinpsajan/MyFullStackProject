@@ -386,7 +386,7 @@ This project is deployed with the following (free) setup:
 | Database | [Neon](https://neon.tech) | Free managed Postgres (Render's free disk is ephemeral) |
 | React app | [Vercel](https://vercel.com) | Built for static/CRA frontends, free |
 
-Both hosts deploy automatically from this GitHub repository.
+Both hosts build from this GitHub repository. Vercel redeploys automatically on every push; Render deploys are triggered manually unless the Render GitHub app is connected.
 
 ### Current deployment
 
@@ -398,8 +398,8 @@ Both hosts deploy automatically from this GitHub repository.
 
 ### Redeploying
 
-- **Push to `main`** — Render redeploys the backend and Vercel rebuilds the frontend automatically.
-- **Manual backend deploy** — Render dashboard → `universityhub-api` → **Manual Deploy → Deploy latest commit**.
+- **Push to `main`** — Vercel rebuilds the frontend automatically (its Git integration is connected).
+- **Backend** — Render does not currently receive GitHub push events for this service, so deploy from the dashboard (**Manual Deploy → Deploy latest commit**) or connect the GitHub app under Render **Account Settings → GitHub** to enable automatic deploys.
 - **Manual frontend deploy** — `cd university-web && vercel deploy --prod`.
 - **Database changes** — run migrations from the Render build (`build.sh` already does this) or locally with `DATABASE_URL` set to the Neon connection string.
 
