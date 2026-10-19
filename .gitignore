@@ -25,3 +25,5 @@ university-web/.env.production
 # OS
 .DS_Store
 Thumbs.db
+.neon
+.env.local
