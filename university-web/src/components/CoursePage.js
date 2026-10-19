@@ -10,20 +10,20 @@ return (
             <h2>Course List</h2>
 
             <CourseCard
-              title="Data Structures"
-              code="CS201"
+              courseName="Data Structures"
+              courseCode="CS201"
               credits={4}
             />
 
             <CourseCard
-              title="Database Systems"
-              code="CS301"
+              courseName="Database Systems"
+              courseCode="CS301"
               credits={3}
             />
 
             <CourseCard
-              title="Machine Learning"
-              code="CS401"
+              courseName="Machine Learning"
+              courseCode="CS401"
               credits={5}
             />
 
