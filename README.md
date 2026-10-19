@@ -7,6 +7,7 @@ A learning project that pairs a **Django + Django REST Framework** backend with 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Live Demo](#live-demo)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Features](#features)
@@ -35,6 +36,21 @@ The repository contains two independent applications:
 | `university-web` | React single-page app that consumes the API | `http://localhost:3000` |
 
 The React app talks to the Django API over CORS (already configured for `http://localhost:3000`).
+
+---
+
+## Live Demo
+
+| Part | URL |
+| --- | --- |
+| React app | https://university-web-kappa.vercel.app |
+| Django API | https://universityhub-api.onrender.com |
+| API health check | https://universityhub-api.onrender.com/academic/hello/ |
+| Django admin | https://universityhub-api.onrender.com/admin/ |
+
+The frontend runs on Vercel, the API on Render, and the database is a Neon Postgres branch. All three are connected to this GitHub repository.
+
+> **Free tier note:** the Render service sleeps after ~15 minutes of inactivity, so the first request can take 30–60 seconds.
 
 ---
 
@@ -362,7 +378,7 @@ Run Django on another port: `python manage.py runserver 8001` and update `REACT_
 
 ## Deployment
 
-The recommended (free) setup splits the two apps:
+This project is deployed with the following (free) setup:
 
 | Part | Host | Why |
 | --- | --- | --- |
@@ -371,6 +387,23 @@ The recommended (free) setup splits the two apps:
 | React app | [Vercel](https://vercel.com) | Built for static/CRA frontends, free |
 
 Both hosts deploy automatically from this GitHub repository.
+
+### Current deployment
+
+| Component | Service | Notes |
+| --- | --- | --- |
+| Frontend | Vercel project `university-web` | Git-connected to `main`, root directory `university-web`, `REACT_APP_API_URL` set to the Render URL |
+| Backend | Render service `universityhub-api` | Blueprint `University_hub`, `DATABASE_URL` points at Neon, `CORS_ALLOWED_ORIGINS` allows the Vercel URL |
+| Database | Neon project `university_hub`, branch `production` | Schema applied with `python manage.py migrate` |
+
+### Redeploying
+
+- **Push to `main`** — Render redeploys the backend and Vercel rebuilds the frontend automatically.
+- **Manual backend deploy** — Render dashboard → `universityhub-api` → **Manual Deploy → Deploy latest commit**.
+- **Manual frontend deploy** — `cd university-web && vercel deploy --prod`.
+- **Database changes** — run migrations from the Render build (`build.sh` already does this) or locally with `DATABASE_URL` set to the Neon connection string.
+
+The steps below describe how to recreate this setup from scratch.
 
 ### Step 1 — Create the Neon database
 
